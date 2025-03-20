@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+        tools {
+            nodejs 'node17(commerce)'
+        }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Balasuriyabala/E-comerence.git'
+            }
+        }
+        stage('Docker Image') {
+            steps {
+                dir('client') {
+                sh "docker build -t commerece ."
+                }
+            }
+        }
+        
+        stage ('Container Application') {
+            steps {
+                dir('client') {
+                sh "docker run -d -p 3000:3000 commerce"
+                }
+            }
+        }
+    }
+}
