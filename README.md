@@ -17,8 +17,14 @@ Step-3 : Docker
 Install Docker on server refer offical documentation
 from client folder we have wriiten the Multi-stage Docker file to reduce the size of the image
 
-Step-4 Create Jenkins pipeline Job
+Step-4 : Create Jenkins pipeline Job
 pipeline scripted attached in the repo 
+
+Step-5 : To known
+If you are using a react for front-end how to react version?
+Ans: Pacakage.json file find  
+     {  "react": "^18.2.0",
+    "react-dom": "^18.2.0",}
 
 
 
