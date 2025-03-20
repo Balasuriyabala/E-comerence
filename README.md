@@ -1,6 +1,6 @@
 # E-comerence 
 
-This is the OpenSource repo link: 
+This is the OpenSource repo link: https://github.com/rishavchanda/Ecomerce-website.git
 
 Front-end Deployment 
 Project Setup using below tools:
