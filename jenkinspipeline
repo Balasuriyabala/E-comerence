@@ -1,29 +1,57 @@
+# Frontend code
 pipeline {
-    agent any
-        tools {
-            nodejs 'node17(commerce)'
-        }
+    agent any 
+
+    tools {
+        //jdk 'jdk-11'
+        nodejs 'node17(commerce)'
+        maven 'maven'
+    }
+
+    environment {
+        SCANNER_HOME=tool 'sonarQube-scanner'
+    }    
 
     stages {
-        stage('Git Checkout') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Balasuriyabala/E-comerence.git'
             }
         }
-        stage('Docker Image') {
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube-server') {  
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=E-commerce \
+                        -Dsonar.projectKey=E-commerce \
+                        -Dsonar.java.binaries=.'''
+                }
+            }
+        }
+        //stage('Depende check') {
+          //  steps {
+            //  dependencyCheck additionalArguments: '--format HTML', odcInstallation: 'DP-CHECK'    
+           //}
+        //}
+        stage('Build Docker Image') {
             steps {
                 dir('client') {
                 sh "docker build -t commerece ."
                 }
             }
         }
-        
+        stage ('Scan Image Trivy') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
         stage ('Container Application') {
             steps {
                 dir('client') {
-                sh "docker run -d -p 3000:3000 commerce"
+                sh 'docker run -d -p 3000:3000 --name commerece-container commerece'
                 }
             }
         }
     }
 }
+
