@@ -1,0 +1,45 @@
+# Avoid the existing data loss
+
+pipeline {
+    agent any 
+
+    tools {
+        nodejs 'node17(commerce)'
+        maven 'maven'
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'dev-fe', url: 'https://github.com/Balasuriyabala/E-comerence.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir('client') {
+                sh "docker build -t commerece ."
+                }
+            }
+        }
+        stage ('Scan Image Trivy') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
+        stage ('Container Application') {
+            steps {
+                dir('client') {
+                sh '''
+                docker stop commerece-container || true
+                docker rm commerece-container || true
+
+                docker run -d \
+                -p 3000:3000 \
+                --name commerece-container \
+                -v /opt/commerce-dataa:/usr/src/app/uploads \
+                commerece
+                '''
+              }
+           }
+       }
+    }
+}
