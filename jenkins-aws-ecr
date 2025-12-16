@@ -1,0 +1,80 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'node17(commerce)'
+        maven 'maven'
+    }
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+        AWS_ACCOUNT_ID = '381491890370'
+        ECR_REPO = 'commerece'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        CREDENTIAL_ID = 'aws-ecr-creds'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'dev-fe',
+                    url: 'https://github.com/Balasuriyabala/E-comerence.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('client') {
+                    sh """
+                    docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                    """
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "${CREDENTIAL_ID}"
+                ]]) {
+                    sh """
+                    aws ecr get-login-password --region ${AWS_REGION} |
+                    docker login --username AWS \
+                    --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    """
+                }
+            }
+        }
+
+        stage('Tag & Push Image to ECR') {
+            steps {
+                sh """
+                docker tag ${ECR_REPO}:${IMAGE_TAG} \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+
+                docker push \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Trivy File Scan') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
+
+        stage('Run Container (Optional)') {
+            steps {
+                sh '''
+                docker rm -f commerece-container || true
+                docker run -d -p 3000:3000 \
+                --name commerece-container \
+                commerece:${IMAGE_TAG}
+                '''
+            }
+        }
+    }
+}
