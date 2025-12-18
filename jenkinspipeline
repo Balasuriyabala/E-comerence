@@ -1,54 +1,91 @@
 pipeline {
-    agent any 
+    agent any
 
     tools {
-        //jdk 'jdk-11'
         nodejs 'node17(commerce)'
         maven 'maven'
     }
 
     environment {
-        SCANNER_HOME=tool 'sonarQube-scanner'
-    }    
+        SCANNER_HOME = tool 'sonarQube-scanner'
+        IMAGE_NAME  = "commerece"
+        IMAGE_TAG   = "${BUILD_NUMBER}"
+    }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git branch: 'dev-fe', url: 'https://github.com/Balasuriyabala/E-comerence.git'
+                git branch: 'dev-fe',
+                    url: 'https://github.com/Balasuriyabala/E-comerence.git'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube-server') {  
-                    sh '''$SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=E-commerce \
-                        -Dsonar.projectKey=E-commerce \
-                        -Dsonar.java.binaries=.'''
+                withSonarQubeEnv('SonarQube-server') {
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                      -Dsonar.projectName=E-commerce \
+                      -Dsonar.projectKey=E-commerce \
+                      -Dsonar.sources=.
+                    '''
                 }
             }
         }
-        //stage('Depende check') {
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        //stage('Dependency Check (SCA)') {
           //  steps {
-            //  dependencyCheck additionalArguments: '--format HTML', odcInstallation: 'DP-CHECK'    
-           //}
-        //}
+            //    dependencyCheck additionalArguments: '''
+              //  --scan ./client
+                //--format XML
+                //--out ./dependency-check-report
+                //''',
+                //odcInstallation: 'DP-CHECK'
+                //dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+              //}
+          //}
+
         stage('Build Docker Image') {
             steps {
                 dir('client') {
-                sh "docker build -t commerece ."
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
-        stage ('Scan Image Trivy') {
+
+        stage('Trivy Image Scan') {
             steps {
-                sh "trivy fs --format table -o trivy-fs-report.html ."
+                sh '''
+                trivy image \
+                  --severity HIGH,CRITICAL \
+                  ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
             }
         }
-        stage ('Container Application') {
+
+        stage('Manual Approval') {
             steps {
-                dir('client') {
-                sh 'docker run -d -p 3000:3000 --name commerece-container commerece'
-                }
+                input message: 'Security checks passed. Approve deployment?',
+                      ok: 'Deploy'
+            }
+        }
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                docker rm -f commerece-container || true
+                docker run -d -p 3000:3000 \
+                  --name commerece-container \
+                   -v /opt/commerce-dataa:/usr/src/app/uploads \
+                  ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
             }
         }
     }
