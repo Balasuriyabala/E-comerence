@@ -25,7 +25,7 @@ RUN npm install -g serve
 
 # Copy only the build output
 
-COPY --from=build /app/build.
+COPY --from=build /app/build ./build
 
 EXPOSE 3000
 
