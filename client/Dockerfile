@@ -12,7 +12,7 @@ COPY public ./public
 
 #RUN npm install 
 #COPY . . 
-#RUN npm run build 
+RUN npm run build 
 
 # Stage 2: Minimal Node.js runtime to serve static files 
 FROM node:20-alpine 
