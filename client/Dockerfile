@@ -1,32 +1,24 @@
-# ---------- Stage 1: Build ----------
-FROM node:20-alpine AS build
+FROM node:17 AS build 
 
-WORKDIR /app
+WORKDIR /app COPY package*.json ./ 
 
-# Copy only dependency files first
-COPY package*.json ./
+RUN npm install COPY . . 
 
-# Deterministic & secure install
-RUN npm ci
+RUN npm run build 
 
-# Copy application source
-COPY . .
+# Stage 2: Minimal Node.js runtime to serve static files 
 
-# Build React app
-RUN npm run build
+FROM node:18-alpine WORKDIR /app 
 
+# Install serve (tiny package) 
 
-# ---------- Stage 2: Runtime ----------
-FROM node:20-alpine
+RUN npm install -g serve 
 
-WORKDIR /app
+# Copy only the build output
 
-# Install serve safely
-RUN npm install -g serve@14
-
-# Copy only build output
-COPY --from=build /app/build ./build
+COPY --from=build /app/build ./build 
 
 EXPOSE 3000
 
+# Serve the React app 
 CMD ["serve", "-s", "build", "-l", "3000"]
