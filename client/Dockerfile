@@ -1,18 +1,21 @@
-FROM node:17 AS build 
+FROM node:20 AS build 
 
 WORKDIR /app 
 
 COPY package*.json ./ 
 
-RUN npm install 
+# Deterministic install
+RUN npm ci
+# Copy application source explicitly
+COPY src ./src
+COPY public ./public
 
-COPY . . 
-
-RUN npm run build 
+#RUN npm install 
+#COPY . . 
+#RUN npm run build 
 
 # Stage 2: Minimal Node.js runtime to serve static files 
-
-FROM node:alpine 
+FROM node:20-alpine 
 
 WORKDIR /app 
 
