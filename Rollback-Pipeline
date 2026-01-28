@@ -1,0 +1,124 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'node17(commerce)'
+        maven 'maven'
+    }
+
+    environment {
+        SCANNER_HOME = tool 'sonarQube-scanner'
+        IMAGE_NAME  = "commerce"
+        IMAGE_TAG   = "${BUILD_NUMBER}"
+    }
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'dev-fe', description: 'Branch to rollback from')
+        string(name: 'TAG', defaultValue: 'v2', description: 'Git tag to rollback to')
+    }
+
+    stages {
+
+        stage('Checkout Branch') {
+            steps {
+                git url: 'https://github.com/Balasuriyabala/E-comerence.git',
+                    branch: "${params.BRANCH}"
+            }
+        }
+
+        stage('Checkout Tag') {
+            steps {
+                sh '''
+                    git fetch --tags
+                    git checkout tags/${TAG}
+                '''
+            }
+        }
+
+        stage('Validate Tag Belongs to Branch') {
+            steps {
+                script {
+                    def result = sh(
+                        script: "git merge-base --is-ancestor ${params.TAG} ${params.BRANCH}",
+                        returnStatus: true
+                    )
+                    if (result != 0) {
+                        error "❌ Tag ${params.TAG} does not belong to branch ${params.BRANCH}"
+                    }
+                }
+            }
+        }
+
+        stage('Confirm Version') {
+            steps {
+                sh '''
+                    echo "Checked-out commit:"
+                    git log -1 --oneline
+                '''
+            }
+        }
+
+        stage('Verify Git Version') {
+            steps {
+                sh '''
+                    echo "Current commit:"
+                    git rev-parse --short HEAD
+                    git describe --tags || echo "No tag for this commit"
+                '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube-server') {
+                    sh '''
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=E-commerce \
+                        -Dsonar.projectKey=E-commerce \
+                        -Dsonar.sources=.
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('client') {
+                    sh "docker build --no-cache -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Manual Approval') {
+            steps {
+                input message: 'Security checks passed. Approve deployment?',
+                      ok: 'Deploy'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                script {
+                    sh '''
+                        docker rm -f commerce-container || true
+
+                        docker run -d -p 3000:3000 \
+                          --name commerce-container-${IMAGE_TAG} \
+                          -v /opt/commerce-data:/usr/src/app/uploads \
+                          ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+    }
+}
