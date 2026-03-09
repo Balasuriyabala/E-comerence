@@ -47,7 +47,19 @@ Inside backend container, localhost = backend container itself, not your host.
 
 To reach MongoDB on your host, you must use the host machine IP, not localhost.
 
-Ans: Update src/api/index.js from local host to machine ip
+Ans: Update src/api/index.js from local host to machine ip  
+
+
+
+ROLLBACK DEPLOYEMT:
+
+<img width="705" height="366" alt="image" src="https://github.com/user-attachments/assets/d7ecbbe9-c3bc-43e0-b585-e85d3992b8aa" />
+
+
+
+<img width="825" height="309" alt="image" src="https://github.com/user-attachments/assets/fe92bb0b-f0d8-4179-a3bb-8398b0657d73" />
+
+
 
 
 
