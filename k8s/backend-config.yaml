@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  MODNO_DB: "mongodb://<IP>:27017/e-commerece"
+  PORT: "8001"
