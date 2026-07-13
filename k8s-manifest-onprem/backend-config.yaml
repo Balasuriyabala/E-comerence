@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  MODNO_DB: "mongodb://admin:changeme123@mongodb-service:27017/e-commerece?authSource=admin"
+  PORT: "8001"
