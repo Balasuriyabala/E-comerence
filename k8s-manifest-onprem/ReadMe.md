@@ -68,6 +68,13 @@ case:1 it detects whensomeone start asn interactive shell
 
 <img width="924" height="215" alt="image" src="https://github.com/user-attachments/assets/fee5d211-ac37-4321-9a54-2af146347149" />
 
+I get into pod and written a main.tf file
+
+<img width="733" height="123" alt="image" src="https://github.com/user-attachments/assets/90412825-b5aa-48e4-b212-484f2ef012fd" />
+
+<img width="945" height="138" alt="image" src="https://github.com/user-attachments/assets/d5a353ac-d063-42eb-b4e6-893dcb3f38f3" />
+
+
 
 
 
