@@ -75,6 +75,9 @@ I get into pod and written a main.tf file
 <img width="945" height="138" alt="image" src="https://github.com/user-attachments/assets/d5a353ac-d063-42eb-b4e6-893dcb3f38f3" />
 
 
+<img width="937" height="403" alt="image" src="https://github.com/user-attachments/assets/7a18381e-6f76-47ba-b29a-537e449259bc" />
+
+
 
 
 
