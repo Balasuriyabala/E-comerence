@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API = axios.create({ 
   //baseURL: import.meta.env.VITE_API_URL,
-  baseURL: "http://192.168.0.219:8001/api/",
+  baseURL: "http://192.168.0.219:32303/api/",
  //baseURL: process.env.REACT_APP_API_URL,
   //baseURL: "http://localhost:8001/api/",
 });
